@@ -1,0 +1,564 @@
+#include <iostream>
+#include <conio.h>
+
+using namespace std;
+
+class Fraction
+{
+protected: // protected makes data (num and den) accessible to functions of derived classes; e.g.: Mixed
+	int num, den;
+
+public:
+	Fraction(int n = 0, int d = 1);
+	Fraction(const Fraction &); // Create a Fraction whose num & den are copied from the parameter
+	void set(int = 0, int = 1);
+	virtual void print() const;
+	virtual void get();
+	int getnum() const;
+	int getden() const;
+	void reduce();
+	virtual void operator+=(const Fraction &);
+	virtual void operator-=(const Fraction &);
+	Fraction operator+(const Fraction &) const;
+	Fraction operator-(const Fraction &) const;
+	Fraction operator*(const Fraction &) const;
+	Fraction operator/(const Fraction &) const;
+	void operator!();
+	bool operator<(const Fraction &) const;
+	bool operator>(const Fraction &) const;
+	bool operator<=(const Fraction &) const;
+	bool operator>=(const Fraction &) const;
+	bool operator==(const Fraction &) const;
+	bool operator!=(const Fraction &) const;
+	virtual operator float() const;
+};
+
+class Mixed : public Fraction // Derive Mixed publicly from Fraction
+{
+private:
+	int whole; // inherits num and den from Fraction
+
+public:
+	Mixed(int, Fraction); // constructors not inherited
+	Mixed(int = 0, int = 0, int = 1);
+	Mixed(Fraction f) : whole(0), Fraction(f) {} // Conversion function/constructor to convert a Fraction to a Mixed
+	void set(int = 0, int = 0, int = 1);
+	Mixed& operator+=(const Mixed &m);
+	void print() const;
+	void get();
+	Mixed operator+(const Mixed &) const;
+	Mixed operator-(const Mixed &) const;
+	Mixed operator*(const Mixed &) const;
+	Mixed operator/(const Mixed &) const;
+	Mixed operator/(int i) const;
+	bool operator<(const Mixed &) const;
+	bool operator>(const Mixed &) const;
+	bool operator<=(const Mixed &) const;
+	bool operator>=(const Mixed &) const;
+	bool operator==(const Mixed &) const;
+	bool operator!=(const Mixed &) const;
+	Mixed& operator++();
+	Mixed& operator++(int);
+};
+
+class Array
+{
+private:
+	int size;
+	Mixed *ptr;
+
+public:
+	Array(int = 1);
+	Array(const Array &); // Copy constructor
+	void print() const;
+	void get();
+	~Array();
+	const Array& operator=(const Array &); // Overloaded assignment operator
+	bool operator==(const Array &) const;
+	bool operator!=(const Array &) const;
+	Mixed &operator[](int);
+	void operator+=(const Array &); // Append function
+	void operator+=(int); // enlarge function
+	void operator-=(int); // shrink function
+	int getsize() const; // returns array size
+	void reset();
+};
+
+/* Definitions of Fraction functions */
+
+Fraction::Fraction(int n, int d) : num(n)
+{
+	den = d > 0 ? d : 1;
+}
+
+Fraction::Fraction(const Fraction &f)
+{
+	num = f.num;
+	den = f.den;
+}
+
+void Fraction::set(int n, int d)
+{
+	num = n;
+	den = d > 0 ? d : 1;
+}
+
+void Fraction::print() const
+{
+	cout << num << "/" << den << endl;
+}
+
+void Fraction::get()
+{
+	char dummy; // To hold the '/' between num and den
+	cout << "\nEnter a fraction (e.g.: 3/4): ";
+	cin >> num >> dummy >> den;
+}
+
+int Fraction::getnum() const
+{
+	return num;
+}
+
+int Fraction::getden() const
+{
+	return den;
+}
+
+void Fraction::reduce()
+{
+	for (int i = num; i > 1; i--)
+		if (num % i == 0 && den % i == 0)
+		{
+			num /= i;
+			den /= i;
+		}
+}
+
+void Fraction::operator+=(const Fraction &f)
+{
+	num = num * f.den + den * f.num;
+	den = den * f.den;
+	reduce();
+}
+
+void Fraction::operator-=(const Fraction &f)
+{
+	num = num * f.den - den * f.num;
+	den = den * f.den;
+	reduce();
+}
+
+Fraction Fraction::operator+(const Fraction &f) const
+{
+	return Fraction(num * f.den + den * f.num, den * f.den);
+}
+
+Fraction Fraction::operator-(const Fraction &f) const
+{
+	return Fraction(num * f.den - den * f.num, den * f.den);
+}
+
+Fraction Fraction::operator*(const Fraction &f) const
+{
+	return Fraction(num * f.num, den * f.den);
+}
+
+Fraction Fraction::operator/(const Fraction &f) const
+{
+	return Fraction(num * f.den, den * f.num);
+}
+
+void Fraction::operator!() // invert function - exchange num and den
+{
+	int tmp = num;
+	num = den;
+	den = tmp;
+}
+
+bool Fraction::operator<(const Fraction &f) const
+{
+	return float(*this) < float(f);
+}
+
+bool Fraction::operator>(const Fraction &f) const
+{
+	return float(*this) > float(f);
+}
+
+bool Fraction::operator<=(const Fraction &f) const
+{
+	return float(*this) <= float(f);
+}
+
+bool Fraction::operator>=(const Fraction &f) const
+{
+	return float(*this) >= float(f);
+}
+
+bool Fraction::operator==(const Fraction &f) const
+{
+	return float(*this) == float(f);
+}
+
+bool Fraction::operator!=(const Fraction &f) const
+{
+	return float(*this) != float(f);
+}
+
+Fraction::operator float() const
+{
+	return (float)num / (float)den;
+}
+
+/* Definitions of Mixed functions */
+
+Mixed::Mixed(int w, Fraction f) : whole(w), Fraction(f) // For this to work, Fraction must have the required constructor
+{}
+
+Mixed::Mixed(int w, int n, int d) : whole(w), Fraction(n, d) // n & d are passed to Fraction constructor to make frac = n/d
+{}
+
+void Mixed::set(int w, int n, int d)
+{
+	whole = w;
+	Fraction::set(n, d); // call base class' set function
+}
+
+void Mixed::get()
+{
+	cout << "\nEnter a whole number: ";
+	cin >> whole;
+	Fraction::get(); // Use base class' get function to get num/den
+}
+
+void Mixed::print() const
+{
+	cout << whole << " ";
+	Fraction::print(); // Use base class' print function to output num/den
+}
+
+Mixed& Mixed::operator+=(const Mixed &m)
+{
+	whole += m.whole;
+	num = num * m.den + den * m.num;
+	den *= m.den;
+	reduce();
+	return *this;
+}
+
+Mixed Mixed::operator+(const Mixed &m) const
+{
+	Fraction temp(num, den); // construct a temp Fraction out of num and den
+	temp += Fraction(m.num, m.den); // make a Fraction out of m's num & den and add it to temp
+	return Mixed(whole + m.whole, temp.getnum(), temp.getden()); // make a Mixed object out of new whole, num and den and return it
+}
+
+Mixed Mixed::operator-(const Mixed &m) const
+{
+	Fraction temp(num, den); // construct a temp Fraction out of num and den
+	temp -= Fraction(m.num, m.den); // make a Fraction out of m's num & den and subtract it from temp
+	return Mixed(whole - m.whole, temp.getnum(), temp.getden()); // make a Mixed object out of new whole, num and den and return it
+}
+
+Mixed Mixed::operator*(const Mixed &m) const
+{
+	return Mixed((Fraction(whole) + Fraction(num, den)) * (Fraction(m.whole) + Fraction(m.num, m.den)));
+	// This first converts both Mixed objects being multiplied to Fractions, then multiplies them and then 
+	// converts the result to Mixed and returns the resulting Mixed object
+}
+
+Mixed Mixed::operator/(const Mixed &m) const
+{
+	return Mixed((Fraction(whole) + Fraction(num, den)) / (Fraction(m.whole) + Fraction(m.num, m.den)));
+	// This first converts both Mixed objects being divided to Fractions, then divides them and then 
+	// converts the result to Mixed and returns the resulting Mixed object
+}
+
+Mixed Mixed::operator/(int i) const
+{
+	return Mixed((Fraction(whole) + Fraction(num, den)) / Fraction(i));
+	// Make Fractions out of whole and num/den, add them together which results in a Fraction,  
+	// make a Fraction out of i, and then divide the former Fraction by the latter
+}
+
+bool Mixed::operator<(const Mixed &m) const
+{ // Make a Fraction out of whole and num/den of both operands and then compare them as Fractions
+	return Fraction(whole) + Fraction(num, den) < Fraction(m.whole) + Fraction(m.num, m.den);
+}
+
+bool Mixed::operator>(const Mixed &m) const
+{ // Make a Fraction out of whole and num/den of both operands and then compare them as Fractions
+	return Fraction(whole) + Fraction(num, den) > Fraction(m.whole) + Fraction(m.num, m.den);
+}
+
+bool Mixed::operator<=(const Mixed &m) const
+{ // Make a Fraction out of whole and num/den of both operands and then compare them as Fractions
+	return Fraction(whole) + Fraction(num, den) <= Fraction(m.whole) + Fraction(m.num, m.den);
+}
+
+bool Mixed::operator>=(const Mixed &m) const
+{ // Make a Fraction out of whole and num/den of both operands and then compare them as Fractions
+	return Fraction(whole) + Fraction(num, den) >= Fraction(m.whole) + Fraction(m.num, m.den);
+}
+
+bool Mixed::operator==(const Mixed &m) const
+{ // Make a Fraction out of whole and num/den of both operands and then compare them as Fractions
+	return Fraction(whole) + Fraction(num, den) == Fraction(m.whole) + Fraction(m.num, m.den);
+}
+
+bool Mixed::operator!=(const Mixed &m) const
+{ // Make a Fraction out of whole and num/den of both operands and then compare them as Fractions
+	return Fraction(whole) + Fraction(num, den) != Fraction(m.whole) + Fraction(m.num, m.den);
+}
+
+Mixed& Mixed::operator++()
+{
+	whole++;
+	return *this;
+}
+
+Mixed& Mixed::operator++(int)
+{
+	whole++;
+	return *this;
+}
+
+// Array function definitions
+
+Array::Array(int s)
+{
+	if (s < 1)
+	{
+		cout << "\nMinimum size is 1.  Size set to 1." << endl;
+		size = 1;
+	}
+	else
+		size = s;
+
+	ptr = new Mixed[size];
+}
+
+Array::Array(const Array &a) : size(a.size) // Copy constructor
+{
+	ptr = new Mixed[size];
+	for (int i = 0; i < size; i++)
+		ptr[i] = a.ptr[i];
+}
+
+void Array::print() const
+{
+	for (int i = 0; i < size; i++)
+	{
+		ptr[i].print(); // We use Array's overloaded [] to access each Mixed element before printing it
+		cout << ", ";
+	}
+
+	cout << endl;
+}
+
+void Array::get()
+{
+	for (int i = 0; i < size; i++)
+		ptr[i].get(); // We use Array a's overloaded [] to access each Mixed element before inputing data to it
+}
+
+Array::~Array()
+{
+	delete[] ptr;
+}
+
+const Array& Array::operator=(const Array &a)
+{
+	if (&a != this) // Check for self-assigment
+	{
+		if (size != a.size) // deallocate and allocate with correct size
+		{
+			delete[] ptr;
+			size = a.size;
+			ptr = new Mixed[size];
+		}
+
+		for (int i = 0; i < size; i++)
+			ptr[i] = a.ptr[i];
+	}
+
+	return *this;
+}
+
+bool Array::operator==(const Array &a) const
+{
+	if (size != a.size)
+		return false;
+
+	for (int i = 0; i < size; i++)
+		if (ptr[i] != a.ptr[i])
+			return false;
+
+	return true;
+}
+
+bool Array::operator!=(const Array &a) const
+{
+	return !(*this == a);
+}
+
+Mixed & Array::operator[](int sub)
+{
+	if (sub < 0 || sub >= size) // Check for subscript out of range error
+	{
+		cout << "\nError: Subscript Out of Range!" << endl;
+		exit(1);
+	}
+
+	return ptr[sub];
+}
+
+void Array::operator+=(int s) // Enlarge size function
+{
+	if (s > 0)
+	{
+		Mixed *temp = ptr; // Save existing ptr
+		ptr = new Mixed[size + s]; // Allocate memory for new size
+
+		for (int i = 0; i < size; i++) // Copy old elements into new ptr
+			ptr[i] = temp[i];
+
+		delete[] temp; // Free old ptr
+		size += s; // increase size by specified amount
+	}
+}
+
+void Array::operator-=(int s) // Shrink size function
+{
+	if (size - s > 0)
+	{
+		size -= s; // decrease size by specified amount
+		Mixed *temp = ptr; // Save existing ptr
+		ptr = new Mixed[size]; // Allocate memory for reduced size
+
+		for (int i = 0; i < size; i++) // Copy from old elements into new smaller ptr
+			ptr[i] = temp[i];
+
+		delete[] temp; // Free old ptr
+	}
+	else
+		cout << "\nArray size cannot be less than 0 - operation not performed." << endl;
+}
+
+void Array::operator+=(const Array &a)
+{
+	Mixed *temp = ptr; // Save existing ptr
+
+	ptr = new Mixed[size + a.size]; // Allocate memory for added size
+
+	for (int i = 0; i < size; i++) // Copy old elements into new ptr
+		ptr[i] = temp[i];
+
+	for (int i = 0; i < a.size; i++) // Copy from a into appended elements
+		ptr[size + i] = a.ptr[i];
+
+	size += a.size; // increase size by specified amount
+
+	delete[] temp; // Free old ptr
+}
+
+int Array::getsize() const
+{
+	return size;
+}
+
+void Array::reset()
+{
+	for (int i = 0; i < size; i++)
+		ptr[i].set(0, 0, 1);
+}
+
+/* main function definition */
+int main()
+{
+	int count = 0, selection;
+	Mixed sum;
+	Fraction min, max;
+	Fraction* array[100] = { 0 };
+	char objType;
+
+	cout << "This program allows the creation of up to 100 objects, that"
+		<< "\ncan be of type Fraction or Mixed - a whole number and a fraction."
+		<< "\nAfter creating the array, the user can edit, display, and delete, "
+		<< "\neach or all objects that have been created.\n";
+
+	do
+	{
+		cout << "\nSelect an action from the following menu by entering a number: "
+			<< "\n--------------------------------------------------------------"
+			<< "\n1. Create new object (Fraction or Mixed)"
+			<< "\n2. Edit array"
+			<< "\n3. Display all objects"
+			<< "\n4. Delete all objects"
+			<< "\n5. Exit"
+			<< "\n-------------------------->";
+
+		cin >> selection;
+		system("cls");
+		switch (selection)
+		{
+		case 1:		cout << "\nEnter F to create a Fraction and M to create a Mixed: ";
+					cin >> objType;
+					while (objType != 'F' && objType != 'f' && objType != 'M' && objType != 'm')
+					{
+						cout << "\nEnter F or M only: ";
+						cin >> objType;
+					}
+					if (objType == 'F' || objType == 'f')
+						array[count] = new Fraction;
+					else if (objType == 'M' || objType == 'm')
+						array[count] = new Mixed;
+					array[count++]->get();
+					break;
+
+		case 2:		if (count > 0) // ask which object to edit
+					{
+						for (int i = 0; i < count; i++)
+						{
+							cout << endl << i + 1 << ". "; // list all objects for user to choose from
+							array[i]->print();
+						}
+						do
+						{
+							cout << "\nEnter the number of the object from the list to edit: ";
+							cin >> selection;
+						} while (selection < 1 || selection > count);
+						array[selection - 1]->get(); // edit specified element
+					}
+					else 
+						cout << "\nThere is nothing to edit." << endl;
+					break;
+
+
+		case 3:		if (count > 0) // display all objects
+						for (int i = 0; i < count; i++)
+							array[i]->print();
+					else
+						cout << "\nThere are no objects to print." << endl;
+					break;
+
+		case 4:		if (count > 0)
+					{
+						for (int i = 0; i < count; i++)
+						{
+							delete array[i];
+							array[i] = 0;
+						}
+						count = 0;
+					}
+					else
+						cout << "\nNothing to delete!";
+					break;
+
+		default:	cout << "\nInvalid entry - you must enter 1 - 5 only.\n";
+		} // end of switch
+
+	}while (selection != 5); // end of while loop
+} // end of main function
+
